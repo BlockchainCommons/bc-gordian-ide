@@ -1,0 +1,101 @@
+import { Envelope } from "@blockchaincommons/envelope/all";
+import { IS_A, SOURCE, TARGET, DATE, VERIFIABLE_AT } from "@blockchaincommons/known-values";
+import { XID, type PrivateKeys, type PublicKeys } from "@blockchaincommons/components";
+import { UR, decodeURWith } from "@blockchaincommons/uniform-resources";
+import type { XIDDocument } from "@blockchaincommons/xid";
+
+export interface FairWitnessInput {
+  claim: string;
+  sourceXidUr: string;
+  targetXidUr: string;
+  verifiableAt?: string;
+  date?: Date;
+  extras?: Record<string, string>;
+}
+
+// `source` / `target` in fair-witness attestations are the XID *identifier*
+// (a 32-byte tagged value), not the full XID document. Parse the `ur:xid/…`
+// string and wrap it as an envelope subject — mirrors `XIDDocument.toEnvelope`'s
+// `Envelope.from(this._xid)`.
+function parseXidUrToEnvelope(ur: string): Envelope {
+  return Envelope.from(decodeURWith(UR.parse(ur), XID.codec));
+}
+
+/** Build + wrap + sign a fair-witness attestation (pattern from §2.1). */
+export function buildSignedAttestation(input: FairWitnessInput, signer: PrivateKeys): Envelope {
+  const src = parseXidUrToEnvelope(input.sourceXidUr);
+  const tgt = parseXidUrToEnvelope(input.targetXidUr);
+
+  let env = Envelope.from(input.claim)
+    .addAssertion(IS_A, "attestation")
+    .addAssertionEnvelope(Envelope.assertion(SOURCE, src))
+    .addAssertionEnvelope(Envelope.assertion(TARGET, tgt))
+    .addAssertion(DATE, (input.date ?? new Date()).toISOString());
+
+  if (input.verifiableAt) env = env.addAssertion(VERIFIABLE_AT, input.verifiableAt);
+  if (input.extras) {
+    for (const [k, v] of Object.entries(input.extras)) if (v) env = env.addAssertion(k, v);
+  }
+  return env.wrap().sign(signer);
+}
+
+/** Try every key in a XID until one verifies the attestation signature. */
+export function verifyAttestationAgainstXid(
+  signed: Envelope,
+  doc: XIDDocument,
+): { verified: boolean; keyNickname?: string; matchedPublicKeys?: PublicKeys } {
+  for (const k of doc.keys) {
+    const pub = k.publicKeys;
+    try {
+      if (signed.hasSignatureFrom(pub)) {
+        return {
+          verified: true,
+          keyNickname: k.nickname || undefined,
+          matchedPublicKeys: pub,
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+  return { verified: false };
+}
+
+/** Produce a superseding attestation that references the prior digest. */
+export function buildSupersedingAttestation(
+  original: Envelope,
+  input: FairWitnessInput,
+  signer: PrivateKeys,
+): Envelope {
+  const originalDigest = original.digest();
+  const src = parseXidUrToEnvelope(input.sourceXidUr);
+  const tgt = parseXidUrToEnvelope(input.targetXidUr);
+
+  let env = Envelope.from(input.claim)
+    .addAssertion(IS_A, "attestation")
+    .addAssertion("supersedes", originalDigest)
+    .addAssertionEnvelope(Envelope.assertion(SOURCE, src))
+    .addAssertionEnvelope(Envelope.assertion(TARGET, tgt))
+    .addAssertion(DATE, (input.date ?? new Date()).toISOString());
+
+  if (input.verifiableAt) env = env.addAssertion(VERIFIABLE_AT, input.verifiableAt);
+  if (input.extras) {
+    for (const [k, v] of Object.entries(input.extras)) if (v) env = env.addAssertion(k, v);
+  }
+  return env.wrap().sign(signer);
+}
+
+/** Produce a retraction envelope referencing the original by digest. */
+export function buildRetractionAttestation(
+  original: Envelope,
+  reason: string,
+  signer: PrivateKeys,
+  subjectText?: string,
+): Envelope {
+  const d = original.digest();
+  const env = Envelope.from(subjectText ?? "RETRACTED: prior attestation")
+    .addAssertion(IS_A, "retraction")
+    .addAssertion("retracts", d)
+    .addAssertion("reason", reason);
+  return env.wrap().sign(signer);
+}

@@ -1,0 +1,74 @@
+import { Envelope } from "@blockchaincommons/envelope/all";
+import { IS_A, DATE, NICKNAME, DEREFERENCE_VIA } from "@blockchaincommons/known-values";
+import { XID, type PrivateKeys } from "@blockchaincommons/components";
+import { UR, decodeURWith } from "@blockchaincommons/uniform-resources";
+
+export interface ClaInput {
+  project: string;
+  licenseName: string;
+  licenseUrl: string;
+  licenseHash: string;
+  licenseHashAlgo: string;
+  projectManagerXidUr: string;
+  projectManagerNickname: string;
+  contributorXidUr: string;
+  contributorNickname: string;
+  copyrightTerms: string;
+  patentTerms: string;
+  contributorRepresents: string;
+}
+
+// CLA `projectManager` / `contributor` sub-envelopes wrap the XID *identifier*,
+// not the XID document. Parse the `ur:xid/…` string and use it as the envelope subject.
+function parseXid(ur: string): Envelope {
+  return Envelope.from(decodeURWith(UR.parse(ur), XID.codec));
+}
+
+/** Build the CLA envelope (unsigned). */
+export function buildClaEnvelope(input: ClaInput): Envelope {
+  const licenseEnv = Envelope.from(input.licenseName)
+    .addAssertion(DEREFERENCE_VIA, input.licenseUrl)
+    .addAssertion(DATE, "2004-01-01T00:00:00Z")
+    .addAssertion("contractHash", input.licenseHash)
+    .addAssertion("hashAlgorithm", input.licenseHashAlgo);
+
+  const pmEnv = parseXid(input.projectManagerXidUr).addAssertion(
+    NICKNAME,
+    input.projectManagerNickname,
+  );
+  const contribEnv = parseXid(input.contributorXidUr).addAssertion(
+    NICKNAME,
+    input.contributorNickname,
+  );
+
+  return Envelope.from("Individual Contributor License Agreement")
+    .addAssertion(IS_A, "ContributorLicenseAgreement")
+    .addAssertion("project", input.project)
+    .addAssertion("grantsCopyrightLicense", input.copyrightTerms)
+    .addAssertion("grantsPatentLicense", input.patentTerms)
+    .addAssertion("contributorRepresents", input.contributorRepresents)
+    .addAssertion("licenseType", licenseEnv)
+    .addAssertion("projectManager", pmEnv)
+    .addAssertion("contributor", contribEnv);
+}
+
+/** Date + wrap + sign the CLA with the contributor's contract key. */
+export function signCla(cla: Envelope, signer: PrivateKeys, date?: Date): Envelope {
+  const dated = cla.addAssertion(DATE, (date ?? new Date()).toISOString());
+  return dated.wrap().sign(signer);
+}
+
+/** Ben's side: wrap the contributor-signed CLA, add acceptedBy + date, wrap again, sign. */
+export function acceptCla(
+  signedCla: Envelope,
+  accepterXidUr: string,
+  accepterPrv: PrivateKeys,
+  date?: Date,
+): Envelope {
+  const wrappedContrib = signedCla.wrap();
+  const accepterXid = parseXid(accepterXidUr);
+  const withAccept = wrappedContrib
+    .addAssertionEnvelope(Envelope.assertion("acceptedBy", accepterXid))
+    .addAssertion(DATE, (date ?? new Date()).toISOString());
+  return withAccept.wrap().sign(accepterPrv);
+}

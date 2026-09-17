@@ -1,0 +1,54 @@
+{
+  "name": "@blockchaincommons/playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "nuxt typecheck",
+    "deploy": "wrangler deploy --config wrangler.jsonc"
+  },
+  "dependencies": {
+    "@blockchaincommons/components": "^1.0.0-beta.4",
+    "@blockchaincommons/crypto": "^1.0.0-beta.3",
+    "@blockchaincommons/dcbor": "^1.0.0-beta.3",
+    "@blockchaincommons/envelope": "^1.0.0-beta.4",
+    "@blockchaincommons/known-values": "^1.0.0-beta.4",
+    "@blockchaincommons/provenance-mark": "^1.0.0-beta.3",
+    "@blockchaincommons/sskr": "^1.0.0-beta.3",
+    "@blockchaincommons/tags": "^1.0.0-beta.3",
+    "@blockchaincommons/uniform-resources": "^1.0.0-beta.3",
+    "@blockchaincommons/xid": "^1.0.0-beta.3",
+    "@nuxt/ui": "^4.11.1",
+    "@paulmillr/qr": "^0.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "vue-draggable-plus": "^0.6.1",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.3",
+    "@iconify-json/lucide": "^1.2.133",
+    "@iconify-json/simple-icons": "^1.2.96",
+    "@nuxt/eslint": "^1.17.0",
+    "@nuxthub/core": "0.10.8",
+    "@nuxtjs/seo": "5.3.16",
+    "@types/node": "^26.6.1",
+    "eslint": "^10.10.0",
+    "nuxt": "^4.5.2",
+    "nuxt-gtag": "5.0.0",
+    "prettier": "3.9.8",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.11",
+    "wrangler": "^4.134.0"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

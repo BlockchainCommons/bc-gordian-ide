@@ -1,0 +1,35 @@
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules
+
+# Nuxt / build artifacts
+.nuxt
+.output
+dist
+*.tsbuildinfo
+
+# Turborepo
+.turbo
+
+# Lock file, until every @blockchaincommons dependency is published at its declared version
+bun.lock
+
+# Deployment (Cloudflare / NuxtHub)
+.wrangler
+.data
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.sw?
+
+# OS
+.DS_Store
+
+# Env
+.env
+.env.*
