@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/wrangler",
-  "name": "bcts",
+  "name": "bc-gordian-ide",
   "compatibility_date": "2025-01-01",
   "compatibility_flags": ["nodejs_compat", "no_nodejs_compat_v2"],
   "workers_dev": false,
