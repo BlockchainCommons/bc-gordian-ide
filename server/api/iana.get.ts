@@ -104,7 +104,7 @@ export default defineCachedEventHandler(
   async () => {
     const response = await fetch(IANA_CBOR_TAGS_URL, {
       headers: {
-        "User-Agent": "BCTS-Registry/1.0 (https://bcts.dev)",
+        "User-Agent": "BCTS-Registry/1.0 (+https://github.com/BlockchainCommons/bc-gordian-ide)",
         Accept: "application/xml, text/xml, */*",
       },
     });

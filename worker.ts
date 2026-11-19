@@ -14,11 +14,12 @@ interface Fetcher {
 interface Env {
   ASSETS: Fetcher;
   CACHE: KVNamespace;
+  // Hostnames from wrangler.jsonc `vars`, so a deployment picks its own names.
+  DOCS_HOSTNAME: string;
+  MCP_HOSTNAME: string;
 }
 
-const DOCS_HOSTNAME = "docs.bcts.dev";
 const DOCS_PREFIX = "/__docs__";
-const MCP_HOSTNAME = "mcp.bcts.dev";
 const MCP_PREFIX = "/__mcp__";
 const MCP_ENDPOINT = "/mcp";
 
@@ -26,7 +27,7 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.hostname === MCP_HOSTNAME) {
+    if (url.hostname === env.MCP_HOSTNAME) {
       if (url.pathname === MCP_ENDPOINT || url.pathname === `${MCP_ENDPOINT}/`) {
         return handleMcpRequest(request, env.ASSETS);
       }
@@ -34,9 +35,9 @@ export default {
         return new Response(
           JSON.stringify({
             name: "bcts-docs",
-            endpoint: `https://${MCP_HOSTNAME}${MCP_ENDPOINT}`,
+            endpoint: `https://${env.MCP_HOSTNAME}${MCP_ENDPOINT}`,
             transport: "Streamable HTTP (JSON-RPC 2.0)",
-            docs: "https://docs.bcts.dev",
+            docs: `https://${env.DOCS_HOSTNAME}`,
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
@@ -44,7 +45,7 @@ export default {
       return new Response("Not Found", { status: 404 });
     }
 
-    if (url.hostname === DOCS_HOSTNAME) {
+    if (url.hostname === env.DOCS_HOSTNAME) {
       const target = new URL(request.url);
       const incoming = url.pathname === "/" ? "/index.html" : url.pathname;
       target.pathname = DOCS_PREFIX + incoming;

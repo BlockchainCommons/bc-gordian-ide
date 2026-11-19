@@ -6,16 +6,24 @@
   "workers_dev": false,
   "preview_urls": false,
   "main": "worker.ts",
-  "routes": [
-    { "pattern": "bcts.dev", "zone_name": "bcts.dev", "custom_domain": true },
-    { "pattern": "docs.bcts.dev", "zone_name": "bcts.dev", "custom_domain": true },
-    { "pattern": "mcp.bcts.dev", "zone_name": "bcts.dev", "custom_domain": true },
-  ],
+  // The playground serves every hostname not named below. The docs and MCP
+  // hosts are routed by the Worker on these names; add a route for each
+  // once its static assets (/__docs__, /__mcp__) are part of the build.
+  "vars": {
+    "DOCS_HOSTNAME": "docs.playground.gordianstack.com",
+    "MCP_HOSTNAME": "mcp.playground.gordianstack.com",
+  },
+  "routes": [{ "pattern": "playground.gordianstack.com", "custom_domain": true }],
   "assets": {
     "directory": ".output/public",
     "binding": "ASSETS",
     "run_worker_first": true,
     "not_found_handling": "none",
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": true },
+    "traces": { "enabled": true },
   },
   "kv_namespaces": [
     {

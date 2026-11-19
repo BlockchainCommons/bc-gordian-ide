@@ -34,7 +34,8 @@ export default defineNuxtConfig({
     },
   },
   site: {
-    url: "https://bcts.dev",
+    // A deployment at another hostname sets NUXT_SITE_URL at build time.
+    url: "https://playground.gordianstack.com",
     name: "BCTS IDE - Blockchain Commons TypeScript",
     description:
       "Interactive playground for exploring dCBOR encoding, Uniform Resources, and Gordian Envelope visualization. Parse, encode, and convert between formats with live examples.",
